@@ -1,6 +1,6 @@
 require_relative "boot"
 
-require "dotenv/load"
+require "dotenv/load" if (ENV['RAILS_ENV'] == "development" || ENV['RAILS_ENV'] == "test")
 
 require "rails/all"
 
