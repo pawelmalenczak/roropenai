@@ -3,6 +3,8 @@ import { Container, Form, Button, Stack } from "react-bootstrap";
 
 import { useForm } from "react-hook-form";
 
+import ShowText from "../ShowText";
+
 type FormData = {
 	question: string;
 };
@@ -15,9 +17,7 @@ const FormComponent: React.FC = () => {
 	const [response, setResponse] = useState("");
 
 	const onSubmit = (values) => {
-		console.log("form values:", values);
-
-		const backend_url_ask = "http://localhost:3000/api/v1/question/ask";
+		const backend_url_ask = "/api/v1/question/ask";
 		const requestOptions = {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
@@ -28,7 +28,6 @@ const FormComponent: React.FC = () => {
 		fetch(backend_url_ask, requestOptions)
 			.then((res) => res.json())
 			.then((json) => {
-				console.log(json);
 				setResponse(json.answer);
 			});
 	};
@@ -38,7 +37,23 @@ const FormComponent: React.FC = () => {
 	};
 
 	const handleFeelingLucky = () => {
-		console.log("blind shot");
+		const options = [
+				"What is a minimalist entrepreneur?",
+				"What is your definition of community?",
+				"How do I decide what kind of business I should start?",
+			],
+			random = ~~(Math.random() * options.length);
+
+		const randomQuestion = options[random];
+
+		const values = { question: "" };
+		values.question = randomQuestion;
+
+		onSubmit(values);
+	};
+
+	const handleAskAnother = () => {
+		setResponse("");
 	};
 
 	const {
@@ -87,15 +102,29 @@ const FormComponent: React.FC = () => {
 					gap={3}
 					className="d-flex justify-content-center"
 				>
-					<Button variant="dark" size="lg" type="submit">
-						Ask question
-					</Button>
-					<Button variant="light" size="lg" onClick={handleFeelingLucky}>
-						I'm feeling lucky
-					</Button>
+					{!response && (
+						<>
+							<Button variant="dark" size="lg" type="submit">
+								Ask question
+							</Button>
+							<Button variant="light" size="lg" onClick={handleFeelingLucky}>
+								I'm feeling lucky
+							</Button>
+						</>
+					)}
 				</Stack>
-				{response && <p>{response}</p>}
 			</Form>
+			{response && (
+				<div>
+					<strong>Answer: </strong>
+					<ShowText answer={response} />
+					<br />
+					<br />
+					<Button variant="dark" size="lg" onClick={handleAskAnother}>
+						Ask another question
+					</Button>
+				</div>
+			)}
 		</Container>
 	);
 };
