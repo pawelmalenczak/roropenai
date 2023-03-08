@@ -28,37 +28,25 @@ class Api::V1::QuestionController < ApplicationController
       question_asked += "?"
     end
 
-    previous_question = Question.find_by(question: question_asked)
-    previous_answer = previous_question&.answer
-
     # TO-DO: include audio_src_url
-    # audio_src_url = previous_question&.audio_src_url
     audio_src_url = '#'
 
-    if previous_answer
-      puts "previously asked and answered: #{previous_question.answer}"
-      previous_question.ask_count += 1
-      previous_question.save
+    cache_key = question_asked 
+    cached_question = Rails.cache.read(cache_key)
 
-      # TO-DO: include audio_src_url
-      render json: { question: previous_question.question, answer: previous_question.answer, id: previous_question.id }
+    if cached_question
+      @question = cached_question
     else
       data = CSV.read('book.pdf.pages.csv')
       document_embeddings = load_embeddings('book.pdf.embeddings.csv')
       answer, context = answer_query_with_context(question_asked, data, document_embeddings)
-
-      # TO-DO: use resemble v2 and audio_src_url
-      @question = Question.new(question: question_asked, context: context, answer: answer, audio_src_url: audio_src_url )
-      # @question = Question.new(question_asked, context, answer, ask_count, audio_src_url)
-      # @question = Question.new(question_asked, answer, context)
-       puts "inspec #{@question.inspect}"
-      @question.save
-      # question = Question.new(question: question_asked, answer: answer, context: context)
-      # question.save
-
-      # TO-DO: include audio_src_url
-      render json: { question: @question.question, answer: answer, id: @question.id }
+      @question = Question.create(question: question_asked, context: context, answer: answer, audio_src_url: audio_src_url )
+      Rails.cache.write(cache_key, @question, expires_in: 24.hours)
     end
+
+
+    # TO-DO: include audio_src_url
+    render json: { question: @question.question, answer: @question.answer, id: @question.id }
   end
 
   def load_embeddings(fname)
@@ -180,7 +168,3 @@ def question_params
   params.permit(:question, :context, :answer, :ask_count, :audio_src_url)
   # params.require(:question).permit(:question, :context, :answer, :ask_count, :audio_src_url)
 end
-
-# def question
-#   @question ||= Question.find(params[:id])
-# end
