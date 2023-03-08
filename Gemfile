@@ -42,6 +42,14 @@ gem "tzinfo-data", platforms: %i[ mingw mswin x64_mingw jruby ]
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
 
+# Required gems to extract text from a PDF document, compute embeddings for the extracted text, and save the embeddings to a CSV file
+
+gem "ruby-openai"
+gem "pdf-reader"
+gem "tokenizers"
+gem "numo-narray"
+
+
 # Use Sass to process CSS
 # gem "sassc-rails"
 
