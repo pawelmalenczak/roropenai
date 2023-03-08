@@ -12,9 +12,25 @@ const FormComponent: React.FC = () => {
 		question: "What is The Minimalist Entrepreneur about?",
 	};
 	const [initialValues, setInitialValues] = useState<FormData>(initState);
+	const [response, setResponse] = useState("");
 
 	const onSubmit = (values) => {
 		console.log("form values:", values);
+
+		const backend_url_ask = "http://localhost:3000/api/v1/question/ask";
+		const requestOptions = {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				question: values.question,
+			}),
+		};
+		fetch(backend_url_ask, requestOptions)
+			.then((res) => res.json())
+			.then((json) => {
+				console.log(json);
+				setResponse(json.answer);
+			});
 	};
 
 	const onError = (error) => {
@@ -78,6 +94,7 @@ const FormComponent: React.FC = () => {
 						I'm feeling lucky
 					</Button>
 				</Stack>
+				{response && <p>{response}</p>}
 			</Form>
 		</Container>
 	);
