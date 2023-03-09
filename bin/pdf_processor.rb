@@ -9,7 +9,7 @@
 
 #!/usr/bin/env ruby
 
-require "dotenv/load"
+require "dotenv/load" if (ENV['RAILS_ENV'] == "development" || ENV['RAILS_ENV'] == "test")
 require "pdf-reader"
 require "openai"
 require "csv"
