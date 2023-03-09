@@ -3,6 +3,8 @@ import { Container, Form, Button, Stack } from "react-bootstrap";
 
 import { useForm } from "react-hook-form";
 
+import ShowText from "../ShowText";
+
 type FormData = {
 	question: string;
 };
@@ -12,9 +14,34 @@ const FormComponent: React.FC = () => {
 		question: "What is The Minimalist Entrepreneur about?",
 	};
 	const [initialValues, setInitialValues] = useState<FormData>(initState);
+	const [loading, setLoading] = useState(false);
+	const [response, setResponse] = useState("");
+
+	const token = document.querySelector('meta[name="csrf-token"]') as HTMLElement;
+	const tokenvalue = token.getAttribute("content") || "";
 
 	const onSubmit = (values) => {
-		console.log("form values:", values);
+		const backend_url_ask = "/api/v1/question/ask";
+		const requestOptions = {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				"X-CSRF-Token": tokenvalue,
+			},
+			body: JSON.stringify({
+				question: values.question,
+			}),
+		};
+		setLoading(true);
+		fetch(backend_url_ask, requestOptions)
+			.then((res) => res.json())
+			.then((data) => {
+				setResponse(data.answer);
+				setLoading(false);
+			})
+			.catch((error) => {
+				setLoading(false);
+			});
 	};
 
 	const onError = (error) => {
@@ -22,7 +49,23 @@ const FormComponent: React.FC = () => {
 	};
 
 	const handleFeelingLucky = () => {
-		console.log("blind shot");
+		const options = [
+				"What is a minimalist entrepreneur?",
+				"What is your definition of community?",
+				"How do I decide what kind of business I should start?",
+			],
+			random = ~~(Math.random() * options.length);
+
+		const randomQuestion = options[random];
+
+		const values = { question: "" };
+		values.question = randomQuestion;
+
+		onSubmit(values);
+	};
+
+	const handleAskAnother = () => {
+		setResponse("");
 	};
 
 	const {
@@ -71,14 +114,39 @@ const FormComponent: React.FC = () => {
 					gap={3}
 					className="d-flex justify-content-center"
 				>
-					<Button variant="dark" size="lg" type="submit">
-						Ask question
-					</Button>
-					<Button variant="light" size="lg" onClick={handleFeelingLucky}>
-						I'm feeling lucky
-					</Button>
+					{!response && (
+						<>
+							<Button variant="dark" size="lg" type="submit" disabled={loading}>
+								Ask question
+							</Button>
+							<Button
+								variant="light"
+								size="lg"
+								onClick={handleFeelingLucky}
+								disabled={loading}
+							>
+								I'm feeling lucky
+							</Button>
+						</>
+					)}
 				</Stack>
 			</Form>
+			{loading && (
+				<div className="text-center mt-4">
+					<p>Loading... </p>
+				</div>
+			)}
+			{response && (
+				<div>
+					<strong>Answer: </strong>
+					<ShowText answer={response} />
+					<br />
+					<br />
+					<Button variant="dark" size="lg" onClick={handleAskAnother}>
+						Ask another question
+					</Button>
+				</div>
+			)}
 		</Container>
 	);
 };

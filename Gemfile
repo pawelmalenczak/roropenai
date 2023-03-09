@@ -49,7 +49,6 @@ gem "pdf-reader"
 gem "tokenizers"
 gem "numo-narray"
 
-
 # Use Sass to process CSS
 # gem "sassc-rails"
 
