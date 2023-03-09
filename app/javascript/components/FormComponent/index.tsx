@@ -14,21 +14,33 @@ const FormComponent: React.FC = () => {
 		question: "What is The Minimalist Entrepreneur about?",
 	};
 	const [initialValues, setInitialValues] = useState<FormData>(initState);
+	const [loading, setLoading] = useState(false);
 	const [response, setResponse] = useState("");
+
+	const token = document.querySelector('meta[name="csrf-token"]') as HTMLElement;
+	const tokenvalue = token.getAttribute("content") || "";
 
 	const onSubmit = (values) => {
 		const backend_url_ask = "/api/v1/question/ask";
 		const requestOptions = {
 			method: "POST",
-			headers: { "Content-Type": "application/json" },
+			headers: {
+				"Content-Type": "application/json",
+				"X-CSRF-Token": tokenvalue,
+			},
 			body: JSON.stringify({
 				question: values.question,
 			}),
 		};
+		setLoading(true);
 		fetch(backend_url_ask, requestOptions)
 			.then((res) => res.json())
-			.then((json) => {
-				setResponse(json.answer);
+			.then((data) => {
+				setResponse(data.answer);
+				setLoading(false);
+			})
+			.catch((error) => {
+				setLoading(false);
 			});
 	};
 
@@ -104,16 +116,26 @@ const FormComponent: React.FC = () => {
 				>
 					{!response && (
 						<>
-							<Button variant="dark" size="lg" type="submit">
+							<Button variant="dark" size="lg" type="submit" disabled={loading}>
 								Ask question
 							</Button>
-							<Button variant="light" size="lg" onClick={handleFeelingLucky}>
+							<Button
+								variant="light"
+								size="lg"
+								onClick={handleFeelingLucky}
+								disabled={loading}
+							>
 								I'm feeling lucky
 							</Button>
 						</>
 					)}
 				</Stack>
 			</Form>
+			{loading && (
+				<div className="text-center mt-4">
+					<p>Loading... </p>
+				</div>
+			)}
 			{response && (
 				<div>
 					<strong>Answer: </strong>

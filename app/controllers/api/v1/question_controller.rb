@@ -4,7 +4,7 @@ require 'numo/narray'
 require 'json'
 
 class Api::V1::QuestionController < ApplicationController
-  skip_before_action :verify_authenticity_token
+  protect_from_forgery with: :exception
 
   MODEL_NAME = 'curie'
   COMPLETIONS_MODEL = 'text-davinci-003'
