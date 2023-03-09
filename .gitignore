@@ -35,3 +35,9 @@
 !/app/assets/builds/.keep
 
 /node_modules
+
+# Ignore the book and embeddings csv
+book.pdf*
+
+# Ignore the book and embeddings csv
+book.pdf*
