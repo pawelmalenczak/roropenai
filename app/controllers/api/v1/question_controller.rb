@@ -2,9 +2,13 @@ require 'dotenv/load'
 require 'openai'
 require 'numo/narray'
 require 'json'
+require 'resemble'
 
 class Api::V1::QuestionController < ApplicationController
   protect_from_forgery with: :exception
+
+  Resemble.api_key = ENV['RESEMBLE_API_KEY']
+  RESEMBLE_PROJECT_UUID = ENV['RESEMBLE_PROJECT_UUID']
 
   MODEL_NAME = 'curie'
   COMPLETIONS_MODEL = 'text-davinci-003'
@@ -28,8 +32,6 @@ class Api::V1::QuestionController < ApplicationController
       question_asked += "?"
     end
 
-    # TO-DO: include audio_src_url
-    audio_src_url = '#'
 
     cache_key = question_asked 
     cached_question = Rails.cache.read(cache_key)
@@ -40,13 +42,35 @@ class Api::V1::QuestionController < ApplicationController
       data = CSV.read('book.pdf.pages.csv')
       document_embeddings = load_embeddings('book.pdf.embeddings.csv')
       answer, context = answer_query_with_context(question_asked, data, document_embeddings)
-      @question = Question.create(question: question_asked, context: context, answer: answer, audio_src_url: audio_src_url )
+
+      # Resemble 
+      project_uuid = RESEMBLE_PROJECT_UUID
+      voice_uuid = 'd88df2b0'
+      callback_uri = '#'
+  
+
+      response = Resemble::V2::Clip.create_async(
+        project_uuid,
+        voice_uuid,
+        callback_uri,
+        answer,
+        title: nil,
+        sample_rate: nil,
+        output_format: nil,
+        precision: nil,
+        include_timestamps: nil,
+        is_public: nil,
+        is_archived: nil
+      )
+  
+      # only for sync!
+      response_src = response['item']['audio_src']
+
+      @question = Question.create(question: question_asked, context: context, answer: answer, audio_src_url: response_src )
       Rails.cache.write(cache_key, @question, expires_in: 24.hours)
     end
 
-
-    # TO-DO: include audio_src_url
-    render json: { question: @question.question, answer: @question.answer, id: @question.id }
+    render json: { question: @question.question, answer: @question.answer, audio_src_url: @question.audio_src_url, id: @question.id }
   end
 
   def load_embeddings(fname)
@@ -166,5 +190,4 @@ private
 
 def question_params
   params.permit(:question, :context, :answer, :ask_count, :audio_src_url)
-  # params.require(:question).permit(:question, :context, :answer, :ask_count, :audio_src_url)
 end

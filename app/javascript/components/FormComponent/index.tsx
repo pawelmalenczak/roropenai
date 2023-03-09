@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Container, Form, Button, Stack } from "react-bootstrap";
 
 import { useForm } from "react-hook-form";
+import useAudio from "../../hooks/useAudio";
 
 import ShowText from "../ShowText";
 
@@ -16,6 +17,9 @@ const FormComponent: React.FC = () => {
 	const [initialValues, setInitialValues] = useState<FormData>(initState);
 	const [loading, setLoading] = useState(false);
 	const [response, setResponse] = useState("");
+	const [audioUrl, setAudioUrl] = useState("");
+
+	const [playing, playAudio, stopAudio] = useAudio(audioUrl);
 
 	const token = document.querySelector('meta[name="csrf-token"]') as HTMLElement;
 	const tokenvalue = token.getAttribute("content") || "";
@@ -36,8 +40,10 @@ const FormComponent: React.FC = () => {
 		fetch(backend_url_ask, requestOptions)
 			.then((res) => res.json())
 			.then((data) => {
-				setResponse(data.answer);
 				setLoading(false);
+				setResponse(data.answer);
+				setAudioUrl(data.audio_src_url);
+				playAudio;
 			})
 			.catch((error) => {
 				setLoading(false);
@@ -65,6 +71,7 @@ const FormComponent: React.FC = () => {
 	};
 
 	const handleAskAnother = () => {
+		stopAudio;
 		setResponse("");
 	};
 
