@@ -1,4 +1,4 @@
-require 'dotenv/load'
+require 'dotenv/load' if (ENV['RAILS_ENV'] == "development" || ENV['RAILS_ENV'] == "test")
 require 'openai'
 require 'numo/narray'
 require 'json'
