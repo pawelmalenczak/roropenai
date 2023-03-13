@@ -35,9 +35,7 @@
 !/app/assets/builds/.keep
 
 /node_modules
-
-# Ignore the book and embeddings csv
-book.pdf*
+.vscode
 
 # Ignore the book and embeddings csv
 book.pdf*
