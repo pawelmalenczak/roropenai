@@ -221,6 +221,7 @@ GEM
       ffi (~> 1.0)
     redis (4.8.1)
     regexp_parser (2.7.0)
+    resemble (1.2.0)
     rexml (3.2.5)
     ruby-openai (3.5.0)
       httparty (>= 0.18.1)
@@ -289,6 +290,7 @@ DEPENDENCIES
   rack-livereload
   rails (~> 7.0.4, >= 7.0.4.2)
   redis (~> 4.0)
+  resemble
   ruby-openai
   selenium-webdriver
   sprockets-rails

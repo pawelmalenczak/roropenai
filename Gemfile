@@ -48,6 +48,7 @@ gem "ruby-openai"
 gem "pdf-reader"
 gem "tokenizers"
 gem "numo-narray"
+gem "resemble"
 
 # Use Sass to process CSS
 # gem "sassc-rails"
