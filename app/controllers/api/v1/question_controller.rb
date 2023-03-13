@@ -130,8 +130,11 @@ class Api::V1::QuestionController < ApplicationController
   end
 
   def vector_similarity(x, y)
-    y_array = JSON.parse(y[1])
-
+    # Data pre-processing required before dot similarity is calculated
+    # Extract the 1D array from the y string and deserialize it into a Ruby array
+    # Next convert the 1D array to a Numo array with Numo::DFloat.cast.
+    y_array = JSON.parse(y[1]) 
+    
     x_arr = Numo::DFloat.cast(x)
     y_arr = Numo::DFloat.cast(y_array)
 
