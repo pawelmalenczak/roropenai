@@ -2,9 +2,13 @@ require 'dotenv/load' if (ENV['RAILS_ENV'] == "development" || ENV['RAILS_ENV'] 
 require 'openai'
 require 'numo/narray'
 require 'json'
+require 'resemble'
 
 class Api::V1::QuestionController < ApplicationController
   protect_from_forgery with: :exception
+
+  Resemble.api_key = ENV['RESEMBLE_API_KEY']
+  RESEMBLE_PROJECT_UUID = ENV['RESEMBLE_PROJECT_UUID']
 
   MODEL_NAME = 'curie'
   COMPLETIONS_MODEL = 'text-davinci-003'
@@ -28,8 +32,6 @@ class Api::V1::QuestionController < ApplicationController
       question_asked += "?"
     end
 
-    # TO-DO: include audio_src_url
-    audio_src_url = '#'
 
     cache_key = question_asked 
     cached_question = Rails.cache.read(cache_key)
@@ -40,13 +42,57 @@ class Api::V1::QuestionController < ApplicationController
       data = CSV.read('book.pdf.pages.csv')
       document_embeddings = load_embeddings('book.pdf.embeddings.csv')
       answer, context = answer_query_with_context(question_asked, data, document_embeddings)
+
+      # Resemble 
+      project_uuid = RESEMBLE_PROJECT_UUID
+      voice_uuid = 'd88df2b0'
+      callback_uri = 'https://#'
+  
+
+      response = Resemble::V2::Clip.create_async(
+        project_uuid,
+        voice_uuid,
+        callback_uri,
+        answer,
+        title: nil,
+        sample_rate: nil,
+        output_format: "mp3",
+        precision: nil,
+        include_timestamps: nil,
+        is_public: nil,
+        is_archived: nil
+      )
+      # puts "response #{response}"
+
+      clip_uuid = response['item']['uuid']
+      audio_src_url = nil
+
+      begin
+        counter = 0
+        loop do
+          get_clip = Resemble::V2::Clip.get(project_uuid, clip_uuid)
+          clip = get_clip['item']
+          if clip['audio_src'].present?
+            audio_src_url = clip['audio_src']
+            break
+          end
+          sleep 1 # wait 1 second before checking again
+          counter += 1
+          break if counter >= 10 # break out of loop after 5 attempts
+        end
+      rescue StandardError => e
+        error = { message: "Error getting audio clip from Resemble.ai API: #{e.message}" }.to_json
+        puts error
+      end
+      # puts "response_src #{audio_src_url}"
+
+
+
       @question = Question.create(question: question_asked, context: context, answer: answer, audio_src_url: audio_src_url )
-      Rails.cache.write(cache_key, @question, expires_in: 24.hours)
+      Rails.cache.write(cache_key, @question, expires_in: 2.hours)
     end
 
-
-    # TO-DO: include audio_src_url
-    render json: { question: @question.question, answer: @question.answer, id: @question.id }
+    render json: { question: @question.question, answer: @question.answer, audio_src_url: @question.audio_src_url, id: @question.id }
   end
 
   def load_embeddings(fname)
@@ -166,5 +212,4 @@ private
 
 def question_params
   params.permit(:question, :context, :answer, :ask_count, :audio_src_url)
-  # params.require(:question).permit(:question, :context, :answer, :ask_count, :audio_src_url)
 end

@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 
-const ShowText = ({ answer }) => {
+type AnswerProps = {
+	answer: string;
+};
+
+const Answer: React.FC<AnswerProps> = ({ answer }) => {
 	const [text, setText] = useState("");
 	const [index, setIndex] = useState(0);
 
@@ -12,8 +16,14 @@ const ShowText = ({ answer }) => {
 				setIndex(index + 1);
 			}, interval);
 		}
-	}, [index]);
+	}, [index, answer, text]);
 
-	return <div>{text}</div>;
+	return (
+		<div style={{ marginBottom: "50px" }}>
+			<strong>Answer: </strong>
+			<p>{text}</p>
+		</div>
+	);
 };
-export default ShowText;
+
+export default Answer;
