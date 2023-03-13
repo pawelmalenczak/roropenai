@@ -1,9 +1,9 @@
 # README
 
-* Experimental project to rebuild askmybook.com in Rails and React.
+## Experimental project to rebuild askmybook.com in Rails and React.
 
-* Requirements
+## Requirements
 
-** Ruby on Rails
-** Postgresql
-** React
+* Ruby on Rails
+* Postgresql
+* React
