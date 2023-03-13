@@ -38,4 +38,4 @@
 .vscode
 
 # Ignore the book and embeddings csv
-book.pdf*
+book.pdf
