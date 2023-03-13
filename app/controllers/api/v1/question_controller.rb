@@ -46,7 +46,7 @@ class Api::V1::QuestionController < ApplicationController
       # Resemble 
       project_uuid = RESEMBLE_PROJECT_UUID
       voice_uuid = 'd88df2b0'
-      callback_uri = '#'
+      callback_uri = 'https://#'
   
 
       response = Resemble::V2::Clip.create_async(
@@ -56,18 +56,40 @@ class Api::V1::QuestionController < ApplicationController
         answer,
         title: nil,
         sample_rate: nil,
-        output_format: nil,
+        output_format: "mp3",
         precision: nil,
         include_timestamps: nil,
         is_public: nil,
         is_archived: nil
       )
-  
-      # only for sync!
-      response_src = response['item']['audio_src']
+      # puts "response #{response}"
 
-      @question = Question.create(question: question_asked, context: context, answer: answer, audio_src_url: response_src )
-      Rails.cache.write(cache_key, @question, expires_in: 24.hours)
+      clip_uuid = response['item']['uuid']
+      audio_src_url = nil
+
+      begin
+        counter = 0
+        loop do
+          get_clip = Resemble::V2::Clip.get(project_uuid, clip_uuid)
+          clip = get_clip['item']
+          if clip['audio_src'].present?
+            audio_src_url = clip['audio_src']
+            break
+          end
+          sleep 1 # wait 1 second before checking again
+          counter += 1
+          break if counter >= 10 # break out of loop after 5 attempts
+        end
+      rescue StandardError => e
+        error = { message: "Error getting audio clip from Resemble.ai API: #{e.message}" }.to_json
+        puts error
+      end
+      # puts "response_src #{audio_src_url}"
+
+
+
+      @question = Question.create(question: question_asked, context: context, answer: answer, audio_src_url: audio_src_url )
+      Rails.cache.write(cache_key, @question, expires_in: 2.hours)
     end
 
     render json: { question: @question.question, answer: @question.answer, audio_src_url: @question.audio_src_url, id: @question.id }
